@@ -1,0 +1,119 @@
+package org.example.edufy_userservice.services;
+
+import jakarta.ws.rs.core.Response;
+import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.CreatedResponseUtil;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class KeycloakService
+{
+    @Value("${keycloak.server-url}")
+    private String serverUrl;
+
+    @Value("${keycloak.realm}")
+    private String realm;
+
+    @Value("${keycloak.client-id}")
+    private String clientId;
+
+    @Value("${keycloak.client-secret}")
+    private String clientSecret;
+
+    @Value("${keycloak.client-uuid}")
+    private String clientUuid;
+
+    @Value("${keycloak.default-role-id}")
+    private String defaultRoleId;
+
+    @Value("${keycloak.default-role-name}")
+    private String defaultRoleName;
+
+    private Keycloak getKeycloakInstance() {
+        return KeycloakBuilder.builder()
+                .serverUrl(serverUrl)
+                .realm("Edufy_Realm") // login to master realm for admin
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .build();
+    }
+
+    public String createUser(String username, String firstName, String lastName, String email, String password)
+    {
+        Keycloak keycloak = getKeycloakInstance();
+
+        UserRepresentation user = new UserRepresentation();
+        user.setEnabled(true);
+        user.setUsername(username);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setEmailVerified(true);
+
+        CredentialRepresentation credential = new CredentialRepresentation();
+        credential.setType(CredentialRepresentation.PASSWORD);
+        credential.setValue(password);
+        credential.setTemporary(false);
+
+        user.setCredentials(List.of(credential));
+
+        Response response = keycloak.realm(realm).users().create(user);
+        if (response.getStatus() != 201) {
+            throw new RuntimeException("Failed to create user: " + response.getStatus());
+        }
+
+        String userId = CreatedResponseUtil.getCreatedId(response);
+        assignRoleToUser(keycloak, userId);
+        return userId;
+    }
+
+    private void assignRoleToUser(Keycloak keycloak, String userId) {
+        var roleRep = new org.keycloak.representations.idm.RoleRepresentation(defaultRoleName, null, false);
+        roleRep.setId(defaultRoleId);
+
+        keycloak.realm(realm)
+                .users()
+                .get(userId)
+                .roles()
+                .clientLevel(clientUuid)
+                .add(List.of(roleRep));
+    }
+
+    public void updateUsername(String keycloakUserId, String newUsername)
+    {
+        Keycloak keycloak = getKeycloakInstance();
+
+        System.out.println(newUsername);
+
+        UserRepresentation user = keycloak.realm(realm)
+                .users()
+                .get(keycloakUserId)
+                .toRepresentation();
+
+        user.setUsername(newUsername);
+
+        keycloak.realm(realm)
+                .users()
+                .get(keycloakUserId)
+                .update(user);
+    }
+
+    public void deleteUser(String keycloakUserId)
+    {
+        Keycloak keycloak = getKeycloakInstance();
+
+        keycloak.realm(realm)
+                .users()
+                .get(keycloakUserId)
+                .remove();
+    }
+
+}

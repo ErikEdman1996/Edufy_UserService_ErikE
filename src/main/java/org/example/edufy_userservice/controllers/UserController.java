@@ -1,12 +1,21 @@
 package org.example.edufy_userservice.controllers;
 
 import org.example.edufy_userservice.dtos.UserCreationDTO;
+import org.example.edufy_userservice.dtos.UserFetchDTO;
+import org.example.edufy_userservice.dtos.UserUpdateDTO;
 import org.example.edufy_userservice.entities.User;
 import org.example.edufy_userservice.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
+
+import java.nio.charset.StandardCharsets;
+import java.security.Principal;
+import java.util.Base64;
 
 
 @RestController
@@ -29,11 +38,44 @@ public class UserController
         return ResponseEntity.ok(addedUser);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUser(@PathVariable long id)
+    {
+        User user = userService.getUser(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable long id, @RequestBody UserUpdateDTO userUpdateDTO, Principal principal)
+    {
+        String username = principal.getName();
+        User user = userService.updateUser(id, userUpdateDTO, username);
+        return ResponseEntity.ok(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable long id)
+    {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/by-keycloak/{sub}")
+    public ResponseEntity<User> getUserByKeycloakSub(@PathVariable String sub)
+    {
+        User user = userService.getUserbyKeycloaksub(sub);
+
+        return ResponseEntity.ok(user);
+    }
+
     @GetMapping("/test")
     public ResponseEntity<?> testEndpoint(Authentication authentication)
     {
-        System.out.println(authentication.getName() + " " + authentication.getAuthorities() + " " + authentication.getPrincipal() + " " + authentication.getCredentials());
-
+        System.out.println("==== DEBUG AUTH ====");
+        System.out.println("Authorities: " + authentication.getAuthorities());
+        System.out.println("Name: " + authentication.getName());
+        System.out.println("Principal: " + authentication.getPrincipal());
+        System.out.println("====================");
         return ResponseEntity.ok("You reached the test.");
     }
 }
