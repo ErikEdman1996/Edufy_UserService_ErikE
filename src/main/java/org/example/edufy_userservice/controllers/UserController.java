@@ -1,33 +1,34 @@
 package org.example.edufy_userservice.controllers;
 
+import org.example.edufy_userservice.dtos.PlayRequestDTO;
 import org.example.edufy_userservice.dtos.UserCreationDTO;
-import org.example.edufy_userservice.dtos.UserFetchDTO;
 import org.example.edufy_userservice.dtos.UserUpdateDTO;
+import org.example.edufy_userservice.entities.Play;
 import org.example.edufy_userservice.entities.User;
+import org.example.edufy_userservice.services.PlayService;
 import org.example.edufy_userservice.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
-import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.util.Base64;
+
 
 
 @RestController
 @RequestMapping("/edufy/v1/users")
 public class UserController
 {
-    final UserService userService;
+    private final UserService userService;
+    private final PlayService playService;
 
     @Autowired
-    public UserController(final UserService userService)
+    public UserController(final UserService userService, PlayService playService)
     {
         this.userService = userService;
+        this.playService = playService;
     }
 
     @PostMapping
@@ -58,6 +59,14 @@ public class UserController
     {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/plays")
+    public ResponseEntity<Play> addPlay(@RequestBody PlayRequestDTO playRequestDTO,  @AuthenticationPrincipal Jwt jwt)
+    {
+        Play play = playService.addPlay(playRequestDTO, jwt);
+
+        return ResponseEntity.ok(play);
     }
 
     @GetMapping("/by-keycloak/{sub}")

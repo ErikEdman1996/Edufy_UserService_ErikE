@@ -16,8 +16,8 @@ import org.apache.logging.log4j.Logger;
 @Service
 public class UserService implements UserServiceInterface
 {
-    final UserRepository userRepository;
-    final KeycloakService keycloakService;
+    private final UserRepository userRepository;
+    private final KeycloakService keycloakService;
 
     private static final Logger userLogger = LogManager.getLogger("UserLogger");
 

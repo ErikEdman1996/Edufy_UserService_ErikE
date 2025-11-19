@@ -27,6 +27,7 @@ public class SecurityConfig
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/edufy/v1/users").permitAll()
                         .requestMatchers("/edufy/v1/users/test").authenticated()
+                        .requestMatchers("/edufy/v1/users/by-keycloak/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/edufy/v1/users/{id}").hasRole("admin")
                         .requestMatchers(HttpMethod.PUT, "/edufy/v1/users/{id}").hasRole("user")
                         .requestMatchers(HttpMethod.DELETE, "/edufy/v1/users/{id}").hasRole("admin")
