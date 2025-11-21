@@ -14,7 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
-
+import java.util.List;
 
 
 @RestController
@@ -68,6 +68,23 @@ public class UserController
 
         return ResponseEntity.ok(play);
     }
+
+    @GetMapping("/plays")
+    public ResponseEntity<List<Play>> getPlays(@AuthenticationPrincipal Jwt jwt)
+    {
+        List<Play> plays = playService.getPlays(jwt);
+
+        return ResponseEntity.ok(plays);
+    }
+
+    @GetMapping("/plays/most-played")
+    public ResponseEntity<Play> getMostPlayedMedia(@AuthenticationPrincipal Jwt jwt)
+    {
+        Play mostPlayed = playService.getMostPlayed(jwt);
+
+        return ResponseEntity.ok(mostPlayed);
+    }
+
 
     @GetMapping("/by-keycloak/{sub}")
     public ResponseEntity<User> getUserByKeycloakSub(@PathVariable String sub)

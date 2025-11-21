@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -55,5 +56,49 @@ public class PlayService implements PlayServiceInterface
         newPlay.setPlayCount(1);
 
         return playsRepository.save(newPlay);
+    }
+
+    @Override
+    public List<Play> getPlays(Jwt jwt)
+    {
+        String sub = jwt.getClaim("sub");
+
+        User user = userService.getUserbyKeycloaksub(sub);
+
+        if(user == null)
+        {
+            throw new ResourceNotFoundException("User", "KeycloakSub", sub);
+        }
+
+        List<Play> plays = playsRepository.findAllByUser(user);
+
+        return plays;
+    }
+
+    @Override
+    public Play getMostPlayed(Jwt jwt)
+    {
+        String sub = jwt.getClaim("sub");
+
+        User user = userService.getUserbyKeycloaksub(sub);
+
+        if(user == null)
+        {
+            throw new ResourceNotFoundException("User", "KeycloakSub", sub);
+        }
+
+        List<Play> plays = playsRepository.findAllByUser(user);
+
+        Play highestPlay = plays.get(0);
+
+        for(Play play : plays)
+        {
+             if(play.getPlayCount() > highestPlay.getPlayCount())
+             {
+                 highestPlay = play;
+             }
+        }
+
+        return highestPlay;
     }
 }
