@@ -11,10 +11,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @Service
-public class KeycloakService
-{
+public class KeycloakService {
     @Value("${keycloak.server-url}")
     private String serverUrl;
 
@@ -36,18 +37,22 @@ public class KeycloakService
     @Value("${keycloak.default-role-name}")
     private String defaultRoleName;
 
+    private static final Logger keycloakLogger = LogManager.getLogger("KeycloakLogger");
+
     private Keycloak getKeycloakInstance() {
+        keycloakLogger.info("Keycloak URL: {}", serverUrl);
+
         return KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
-                .realm("Edufy_Realm") // login to master realm for admin
+                .realm(realm) // login to master realm for admin
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
                 .clientId(clientId)
                 .clientSecret(clientSecret)
                 .build();
     }
 
-    public String createUser(String username, String firstName, String lastName, String email, String password)
-    {
+    public String createUser(String username, String firstName, String lastName, String email, String password) {
+        keycloakLogger.info("Creating user in Keycloak: {}", username);
         Keycloak keycloak = getKeycloakInstance();
 
         UserRepresentation user = new UserRepresentation();
@@ -67,7 +72,9 @@ public class KeycloakService
 
         Response response = keycloak.realm(realm).users().create(user);
         if (response.getStatus() != 201) {
-            throw new RuntimeException("Failed to create user: " + response.getStatus());
+            String responseBody = response.readEntity(String.class);
+            keycloakLogger.error("Failed to create user. Status: {}, Body: {}", response.getStatus(), responseBody);
+            throw new RuntimeException("Failed to create user: " + response.getStatus() + " " + responseBody);
         }
 
         String userId = CreatedResponseUtil.getCreatedId(response);
@@ -87,11 +94,10 @@ public class KeycloakService
                 .add(List.of(roleRep));
     }
 
-    public void updateUsername(String keycloakUserId, String newUsername)
-    {
+    public void updateUsername(String keycloakUserId, String newUsername) {
         Keycloak keycloak = getKeycloakInstance();
 
-        System.out.println(newUsername);
+        keycloakLogger.info("Updating username for user {} to {}", keycloakUserId, newUsername);
 
         UserRepresentation user = keycloak.realm(realm)
                 .users()
@@ -106,8 +112,8 @@ public class KeycloakService
                 .update(user);
     }
 
-    public void deleteUser(String keycloakUserId)
-    {
+    public void deleteUser(String keycloakUserId) {
+        keycloakLogger.info("Deleting user from Keycloak: {}", keycloakUserId);
         Keycloak keycloak = getKeycloakInstance();
 
         keycloak.realm(realm)
