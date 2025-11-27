@@ -1,5 +1,6 @@
 package org.example.edufy_userservice.controllers;
 
+import org.example.edufy_userservice.dtos.PlayMediaDTO;
 import org.example.edufy_userservice.dtos.PlayRequestDTO;
 import org.example.edufy_userservice.dtos.UserCreationDTO;
 import org.example.edufy_userservice.dtos.UserUpdateDTO;
@@ -16,87 +17,81 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.List;
 
-
 @RestController
 @RequestMapping("/edufy/v1/users")
-public class UserController
-{
+public class UserController {
     private final UserService userService;
     private final PlayService playService;
 
     @Autowired
-    public UserController(final UserService userService, PlayService playService)
-    {
+    public UserController(final UserService userService, PlayService playService) {
         this.userService = userService;
         this.playService = playService;
     }
 
     @PostMapping
-    public ResponseEntity<User> addUser(@RequestBody UserCreationDTO userCreationDTO)
-    {
+    public ResponseEntity<User> addUser(@RequestBody UserCreationDTO userCreationDTO) {
         User addedUser = userService.addUser(userCreationDTO);
 
         return ResponseEntity.ok(addedUser);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable long id)
-    {
+    public ResponseEntity<User> getUser(@PathVariable long id) {
         User user = userService.getUser(id);
         return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable long id, @RequestBody UserUpdateDTO userUpdateDTO, Principal principal)
-    {
+    public ResponseEntity<User> updateUser(@PathVariable long id, @RequestBody UserUpdateDTO userUpdateDTO,
+            Principal principal) {
         String username = principal.getName();
         User user = userService.updateUser(id, userUpdateDTO, username);
         return ResponseEntity.ok(user);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable long id)
-    {
+    public ResponseEntity<?> deleteUser(@PathVariable long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/plays")
-    public ResponseEntity<Play> addPlay(@RequestBody PlayRequestDTO playRequestDTO,  @AuthenticationPrincipal Jwt jwt)
-    {
+    public ResponseEntity<Play> addPlay(@RequestBody PlayRequestDTO playRequestDTO, @AuthenticationPrincipal Jwt jwt) {
         Play play = playService.addPlay(playRequestDTO, jwt);
 
         return ResponseEntity.ok(play);
     }
 
     @GetMapping("/plays")
-    public ResponseEntity<List<Play>> getPlays(@AuthenticationPrincipal Jwt jwt)
-    {
+    public ResponseEntity<List<Play>> getPlays(@AuthenticationPrincipal Jwt jwt) {
         List<Play> plays = playService.getPlays(jwt);
 
         return ResponseEntity.ok(plays);
     }
 
     @GetMapping("/plays/most-played")
-    public ResponseEntity<Play> getMostPlayedMedia(@AuthenticationPrincipal Jwt jwt)
-    {
+    public ResponseEntity<Play> getMostPlayedMedia(@AuthenticationPrincipal Jwt jwt) {
         Play mostPlayed = playService.getMostPlayed(jwt);
 
         return ResponseEntity.ok(mostPlayed);
     }
 
+    @GetMapping("/history")
+    public ResponseEntity<List<PlayMediaDTO>> getPlayHistory(@AuthenticationPrincipal Jwt jwt) {
+        List<PlayMediaDTO> history = playService.getPlayHistory(jwt);
+        return ResponseEntity.ok(history);
+    }
 
     @GetMapping("/by-keycloak/{sub}")
-    public ResponseEntity<User> getUserByKeycloakSub(@PathVariable String sub)
-    {
+    public ResponseEntity<User> getUserByKeycloakSub(@PathVariable String sub) {
         User user = userService.getUserbyKeycloaksub(sub);
 
         return ResponseEntity.ok(user);
     }
 
     @GetMapping("/test")
-    public ResponseEntity<?> testEndpoint(Authentication authentication)
-    {
+    public ResponseEntity<?> testEndpoint(Authentication authentication) {
         System.out.println("==== DEBUG AUTH ====");
         System.out.println("Authorities: " + authentication.getAuthorities());
         System.out.println("Name: " + authentication.getName());

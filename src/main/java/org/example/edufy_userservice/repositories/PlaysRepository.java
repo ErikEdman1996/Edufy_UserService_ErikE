@@ -13,4 +13,5 @@ public interface PlaysRepository extends JpaRepository<Play, Long>
 {
     Optional<Play> findByUserAndMediaId(User user, Long mediaId);
     List<Play> findAllByUser(User user);
+    List<Play> findByUserId(Long userId);
 }

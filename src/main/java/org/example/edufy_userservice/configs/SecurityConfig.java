@@ -31,6 +31,7 @@ public class SecurityConfig
                         .requestMatchers(HttpMethod.PUT, "/edufy/v1/users/{id}").hasRole("user")
                         .requestMatchers(HttpMethod.POST, "/edufy/v1/users/plays").hasRole("user")
                         .requestMatchers(HttpMethod.GET, "/edufy/v1/users/plays").hasRole("user")
+                        .requestMatchers(HttpMethod.GET, "/edufy/v1/users/history").hasRole("user")
                         .requestMatchers(HttpMethod.GET, "/edufy/v1/users/{id}").hasRole("admin")
                         .requestMatchers(HttpMethod.DELETE, "/edufy/v1/users/{id}").hasRole("admin")
                         .anyRequest().authenticated()

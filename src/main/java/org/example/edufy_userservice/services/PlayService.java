@@ -1,5 +1,7 @@
 package org.example.edufy_userservice.services;
 
+import org.example.edufy_userservice.dtos.MediaDetailsDTO;
+import org.example.edufy_userservice.dtos.PlayMediaDTO;
 import org.example.edufy_userservice.dtos.PlayRequestDTO;
 import org.example.edufy_userservice.entities.Play;
 import org.example.edufy_userservice.entities.User;
@@ -109,5 +111,37 @@ public class PlayService implements PlayServiceInterface {
                 highestPlay.getPlayCount());
 
         return highestPlay;
+    }
+
+    @Override
+    public List<PlayMediaDTO> getPlayHistory(Jwt jwt) {
+        String sub = jwt.getClaim("sub");
+        playLogger.info("Retrieving play history for user with sub: {}", sub);
+
+        User user = userService.getUserbyKeycloaksub(sub);
+
+        if (user == null) {
+            playLogger.warn("User with sub {} not found", sub);
+            throw new ResourceNotFoundException("User", "KeycloakSub", sub);
+        }
+
+        List<Play> plays = playsRepository.findAllByUser(user);
+        List<PlayMediaDTO> playMediaDTOS = new java.util.ArrayList<>();
+
+        for (Play play : plays) {
+            MediaDetailsDTO mediaDetails = mediaClientService.getMediaDetails(play.getMediaId(), jwt);
+            if (mediaDetails != null) {
+                playMediaDTOS.add(new PlayMediaDTO(
+                        play.getId(),
+                        play.getUser().getId(),
+                        play.getPlayCount(),
+                        mediaDetails.getId(),
+                        mediaDetails.getTitle(),
+                        mediaDetails.getArtists(),
+                        mediaDetails.getGenres()));
+            }
+        }
+
+        return playMediaDTOS;
     }
 }

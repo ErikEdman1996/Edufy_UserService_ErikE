@@ -1,5 +1,6 @@
 package org.example.edufy_userservice.services;
 
+import org.example.edufy_userservice.dtos.MediaDetailsDTO;
 import org.example.edufy_userservice.dtos.MediaFetchResponseDTO;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,25 @@ public class MediaClientService {
         }
 
         catch (HttpClientErrorException.Unauthorized e) {
+            mediaClientLogger.error("Unauthorized when calling MediaService", e);
+            throw new RuntimeException("Unauthorized when calling MediaService", e);
+        }
+    }
+
+    public MediaDetailsDTO getMediaDetails(Long mediaId, Jwt jwt) {
+        mediaClientLogger.info("Fetching media details for ID: {}", mediaId);
+        try {
+            MediaDetailsDTO response = restClient.get()
+                    .uri("/" + mediaId + "/details")
+                    .header("Authorization", "Bearer " + jwt.getTokenValue())
+                    .retrieve()
+                    .body(MediaDetailsDTO.class);
+
+            return response;
+        } catch (HttpClientErrorException.NotFound e) {
+            mediaClientLogger.warn("Media details with ID {} not found", mediaId);
+            return null;
+        } catch (HttpClientErrorException.Unauthorized e) {
             mediaClientLogger.error("Unauthorized when calling MediaService", e);
             throw new RuntimeException("Unauthorized when calling MediaService", e);
         }

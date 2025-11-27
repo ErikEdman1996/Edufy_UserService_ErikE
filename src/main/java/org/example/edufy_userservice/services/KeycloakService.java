@@ -44,7 +44,7 @@ public class KeycloakService {
 
         return KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
-                .realm(realm) // login to master realm for admin
+                .realm(realm)
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
                 .clientId(clientId)
                 .clientSecret(clientSecret)
@@ -121,5 +121,4 @@ public class KeycloakService {
                 .get(keycloakUserId)
                 .remove();
     }
-
 }
